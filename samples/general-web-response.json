@@ -1,0 +1,22 @@
+{
+    "topic": "Health benefits and risks of intermittent fasting",
+    "searchSource": "WEB",
+    "executiveSummary": "Intermittent fasting alternates between periods of eating and not eating [S2]. It is associated with weight loss, lower blood pressure, reduced oxidative stress, improved insulin sensitivity, autophagy, and potential lifespan extension [S1][S2][S5]. However, it carries risks such as hypoglycemia, muscle loss, dehydration, malnutrition, and is not suitable for everyone, including pregnant people, children, and those with eating disorder histories [S1][S3].",
+    "keyFindings": [
+        "Daily intermittent fasting can result in about half a pound of weight loss per week [S1].",
+        "Intermittent fasting is linked to large decreases in blood pressure and lowers oxidative stress tied to cell damage, cancer, and heart disease [S1].",
+        "It reduces insulin resistance and fasting insulin, especially with weight loss, and induces autophagy [S2].",
+        "Intermittent fasting may extend lifespan in humans and animals [S5].",
+        "Common side effects include hunger, headaches, fatigue, irritability, digestive issues, and bad breath [S3].",
+        "Prolonged fasts lasting days can negatively affect muscle mass, and improper fasting can cause dehydration and malnutrition [S1][S3].",
+        "People with diabetes should consult a doctor before fasting due to the risk of dangerously low blood sugar [S1]."
+    ],
+    "details": "Intermittent fasting alternates between periods of eating and not eating [S2]. Daily practice can lead to about half a pound of weight loss per week [S1]. It is linked to large decreases in blood pressure, lower oxidative stress tied to cell damage, cancer, and heart disease, reduced insulin resistance and fasting insulin especially with weight loss, and the induction of autophagy [S1][S2]. Eating earlier in the day may provide greater benefits for blood sugar and blood pressure [S1], and the practice may extend lifespan in humans and animals [S5].\n\nDespite these benefits, intermittent fasting has notable risks and side effects. Common side effects include hunger, headaches, fatigue, irritability, digestive issues, and bad breath [S3], and intermittent energy restriction can produce higher hunger scores than continuous calorie restriction [S3]. Prolonged fasts lasting days can negatively affect muscle mass [S1], while improper fasting can cause dehydration and malnutrition [S3]. People with diabetes should consult a doctor before fasting to avoid dangerously low blood sugar [S1], and type 2 diabetes patients may improve blood sugar control but face increased hypoglycemia risk [S4]. Intermittent fasting is not recommended during pregnancy, for children, or for people with eating disorder histories [S1].",
+    "sources": [
+        "[S1] The health benefits of intermittent fasting | Harvard T.H. Chan School of Public Health - https://hsph.harvard.edu/news/the-health-benefits-of-intermittent-fasting",
+        "[S2] Intermittent Fasting Benefits, Risks, and How it Works | Mass General Brigham - https://www.massgeneralbrigham.org/en/health-wellness/pros-and-cons-of-intermittent-fasting",
+        "[S3] 9 Possible Side Effects of Intermittent Fasting - https://www.healthline.com/nutrition/intermittent-fasting-side-effects",
+        "[S4] Intermittent Fasting: Benefits, Risks & Safe Practices | CLS Health - https://cls.health/blog/intermittent-fasting",
+        "[S5] Health Benefits of Intermittent Fasting. - https://pubmed.ncbi.nlm.nih.gov/38955141"
+    ]
+}

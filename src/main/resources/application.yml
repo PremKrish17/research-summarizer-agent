@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: research-summarizer-agent
+  # Loads API keys from a local .env file (gitignored). Real environment variables also work.
+  config:
+    import: optional:file:.env[.properties]
+
+openrouter:
+  base-url: https://openrouter.ai/api/v1
+  api-key: ${OPENROUTER_API_KEY:}
+  # A specific pinned model instead of "openrouter/free" (which picks a random model each call).
+  model: nvidia/nemotron-3.5-super-vl:free
+  # Used in this order only if the primary model fails (e.g. rate limited).
+  fallback-models: google/gemma-4-31b-it:free,google/gemma-4-26b-a4b-it:free
+
+tavily:
+  api-key: ${TAVILY_API_KEY:}
+
+mcp:
+  url: https://developers.openai.com/mcp
+
+logging:
+  pattern:
+    # Adds the request's trace id (set by TraceIdFilter) to every log line, e.g. "INFO [3f9a1c2e]".
+    # %replace removes the empty "[]" from lines written outside a request, e.g. at startup.
+    level: >-
+      %5p%replace( [%X{traceId}]){' \[\]', ''}
+  # For JSON logs (one JSON object per line, traceId as a field), set LOGGING_STRUCTURED_FORMAT_CONSOLE=ecs.

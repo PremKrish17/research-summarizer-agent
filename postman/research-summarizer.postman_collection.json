@@ -1,0 +1,798 @@
+{
+  "info": {
+    "name": "Research Summarizer Agent - API Test Scenarios",
+    "description": "17 API scenarios, most important first, edge cases last.\n\nStart the app first (docker compose up --build, or ./mvnw spring-boot:run).\nScenarios 15-17 need a separate test container: see each request's description.\n\nEvery request has automatic checks: see the Test Results tab after sending.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Main scenarios (routing)",
+      "item": [
+        {
+          "name": "01. OpenAI topic -> MCP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"searchSource is MCP\", () => pm.expect(pm.response.json().searchSource).to.eql(\"MCP\"));",
+                  "pm.test(\"report has all sections\", () => { const r = pm.response.json(); pm.expect(r.executiveSummary).to.be.a(\"string\").and.not.empty; pm.expect(r.keyFindings).to.be.an(\"array\").and.not.empty; pm.expect(r.details).to.be.a(\"string\").and.not.empty; pm.expect(r.sources).to.be.an(\"array\").and.not.empty; });",
+                  "pm.test(\"X-Trace-Id header is present\", () => pm.response.to.have.header(\"X-Trace-Id\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/research/summarize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "research",
+                "summarize"
+              ]
+            },
+            "description": "Most important scenario. An OpenAI developer topic is answered from the OpenAI Docs MCP server.\n\nExpected: 200, searchSource MCP, sources from developers.openai.com. Takes about 30-90 s.",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"topic\": \"How does streaming work in the OpenAI Responses API?\", \"maxSources\": 3 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "02. General topic -> WEB",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"searchSource is WEB\", () => pm.expect(pm.response.json().searchSource).to.eql(\"WEB\"));",
+                  "pm.test(\"report has all sections\", () => { const r = pm.response.json(); pm.expect(r.executiveSummary).to.be.a(\"string\").and.not.empty; pm.expect(r.keyFindings).to.be.an(\"array\").and.not.empty; pm.expect(r.details).to.be.a(\"string\").and.not.empty; pm.expect(r.sources).to.be.an(\"array\").and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/research/summarize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "research",
+                "summarize"
+              ]
+            },
+            "description": "A topic not about OpenAI goes straight to Tavily web search.\n\nExpected: 200, searchSource WEB.",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"topic\": \"Health benefits of intermittent fasting\", \"maxSources\": 3 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "03. OpenAI topic not in docs -> fallback to WEB",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"searchSource is WEB\", () => pm.expect(pm.response.json().searchSource).to.eql(\"WEB\"));",
+                  "pm.test(\"report has all sections\", () => { const r = pm.response.json(); pm.expect(r.executiveSummary).to.be.a(\"string\").and.not.empty; pm.expect(r.keyFindings).to.be.an(\"array\").and.not.empty; pm.expect(r.details).to.be.a(\"string\").and.not.empty; pm.expect(r.sources).to.be.an(\"array\").and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/research/summarize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "research",
+                "summarize"
+              ]
+            },
+            "description": "The topic names OpenAI, so MCP is tried first. The docs have no relevant page, so the app falls back to web search.\n\nExpected: 200, searchSource WEB. Log shows 'MCP returned only 0 relevant docs, falling back to web'. Can take up to 2 minutes.",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"topic\": \"Who founded OpenAI?\", \"maxSources\": 3 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "04. Fine-tuning topic -> MCP (routing rule 3)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"searchSource is MCP\", () => pm.expect(pm.response.json().searchSource).to.eql(\"MCP\"));",
+                  "pm.test(\"report has all sections\", () => { const r = pm.response.json(); pm.expect(r.executiveSummary).to.be.a(\"string\").and.not.empty; pm.expect(r.keyFindings).to.be.an(\"array\").and.not.empty; pm.expect(r.details).to.be.a(\"string\").and.not.empty; pm.expect(r.sources).to.be.an(\"array\").and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/research/summarize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "research",
+                "summarize"
+              ]
+            },
+            "description": "No OpenAI product is named, but fine-tuning is an OpenAI query type in the assignment, so routing rule 3 sends it to MCP.\n\nExpected: 200, searchSource MCP.",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"topic\": \"How does fine-tuning work?\", \"maxSources\": 3 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "05. Other AI vendor -> WEB (routing rule 2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"searchSource is WEB\", () => pm.expect(pm.response.json().searchSource).to.eql(\"WEB\"));",
+                  "pm.test(\"report has all sections\", () => { const r = pm.response.json(); pm.expect(r.executiveSummary).to.be.a(\"string\").and.not.empty; pm.expect(r.keyFindings).to.be.an(\"array\").and.not.empty; pm.expect(r.details).to.be.a(\"string\").and.not.empty; pm.expect(r.sources).to.be.an(\"array\").and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/research/summarize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "research",
+                "summarize"
+              ]
+            },
+            "description": "The topic mentions fine-tuning, but 'Llama' is another vendor, so routing rule 2 sends it to the web.\n\nExpected: 200, searchSource WEB.",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"topic\": \"Fine-tuning Llama with LoRA\", \"maxSources\": 3 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Input validation and API behaviour",
+      "item": [
+        {
+          "name": "06. Blank topic -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"message is correct\", () => pm.expect(pm.response.json().message).to.eql(\"topic must not be blank\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/research/summarize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "research",
+                "summarize"
+              ]
+            },
+            "description": "Validation: the topic must not be blank. No AI call is made.\n\nExpected: 400, message 'topic must not be blank'.",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"topic\": \"   \" }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "07. maxSources = 0 -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"message is correct\", () => pm.expect(pm.response.json().message).to.eql(\"maxSources must be between 1 and 10\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/research/summarize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "research",
+                "summarize"
+              ]
+            },
+            "description": "Validation: maxSources must be between 1 and 10.\n\nExpected: 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"topic\": \"How does fine-tuning work?\", \"maxSources\": 0 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "08. Malformed JSON -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"message is correct\", () => pm.expect(pm.response.json().message).to.eql(\"Malformed JSON request body\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/research/summarize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "research",
+                "summarize"
+              ]
+            },
+            "description": "The closing } is missing on purpose. Postman underlines it in red: send it anyway.\n\nExpected: 400, message 'Malformed JSON request body'.",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"topic\": \"How does fine-tuning work?\"",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "09. Caller's own X-Trace-Id is returned",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Trace-Id is echoed back\", () => pm.expect(pm.response.headers.get(\"X-Trace-Id\")).to.eql(\"postman-test-1\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Trace-Id",
+                "value": "postman-test-1"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/research/summarize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "research",
+                "summarize"
+              ]
+            },
+            "description": "The request sends X-Trace-Id: postman-test-1. The response header returns the same id, and every log line of this request (all 3 agents) shows [postman-test-1].\n\nScreenshot: the response Headers tab, plus Docker Desktop > Logs searched for postman-test-1.",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"topic\": \"How does fine-tuning work?\", \"maxSources\": 3 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "10. maxSources omitted -> default 5",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"report has all sections\", () => { const r = pm.response.json(); pm.expect(r.executiveSummary).to.be.a(\"string\").and.not.empty; pm.expect(r.keyFindings).to.be.an(\"array\").and.not.empty; pm.expect(r.details).to.be.a(\"string\").and.not.empty; pm.expect(r.sources).to.be.an(\"array\").and.not.empty; });",
+                  "pm.test(\"at most 5 sources\", () => pm.expect(pm.response.json().sources.length).to.be.at.most(5));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/research/summarize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "research",
+                "summarize"
+              ]
+            },
+            "description": "maxSources is optional. Without it the app uses 5.\n\nExpected: 200, at most 5 sources.",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"topic\": \"Health benefits of intermittent fasting\" }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "11. Missing topic -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"message is correct\", () => pm.expect(pm.response.json().message).to.eql(\"topic must not be blank\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/research/summarize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "research",
+                "summarize"
+              ]
+            },
+            "description": "The topic field is not sent at all.\n\nExpected: 400, message 'topic must not be blank'.",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"maxSources\": 3 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "12. maxSources = 11 -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"message is correct\", () => pm.expect(pm.response.json().message).to.eql(\"maxSources must be between 1 and 10\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/research/summarize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "research",
+                "summarize"
+              ]
+            },
+            "description": "Upper limit of maxSources.\n\nExpected: 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"topic\": \"How does fine-tuning work?\", \"maxSources\": 11 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "13. maxSources wrong type -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"message is correct\", () => pm.expect(pm.response.json().message).to.eql(\"Malformed JSON request body\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/research/summarize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "research",
+                "summarize"
+              ]
+            },
+            "description": "maxSources is text instead of a number.\n\nExpected: 400, message 'Malformed JSON request body'.",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"topic\": \"How does fine-tuning work?\", \"maxSources\": \"five\" }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "14. GET instead of POST -> 405",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 405\", () => pm.response.to.have.status(405));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/research/summarize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "research",
+                "summarize"
+              ]
+            },
+            "description": "Wrong HTTP method. Spring answers itself, so the body has Spring's default format (timestamp, status, error, path).\n\nExpected: 405 Method Not Allowed."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Edge cases (failures and recovery)",
+      "item": [
+        {
+          "name": "15. OpenAI docs server down -> fallback to WEB (port 8081)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"searchSource is WEB\", () => pm.expect(pm.response.json().searchSource).to.eql(\"WEB\"));",
+                  "pm.test(\"report has all sections\", () => { const r = pm.response.json(); pm.expect(r.executiveSummary).to.be.a(\"string\").and.not.empty; pm.expect(r.keyFindings).to.be.an(\"array\").and.not.empty; pm.expect(r.details).to.be.a(\"string\").and.not.empty; pm.expect(r.sources).to.be.an(\"array\").and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{mcpDownUrl}}/api/research/summarize",
+              "host": [
+                "{{mcpDownUrl}}"
+              ],
+              "path": [
+                "api",
+                "research",
+                "summarize"
+              ]
+            },
+            "description": "SETUP FIRST (Git Bash, project folder):\n\ndocker run --rm -d --name test-mcp-down -p 8081:8080 --env-file .env -e MCP_URL=http://127.0.0.1:9/mcp research-summarizer-agent-research-summarizer\n\nWait about 15 s for startup, then send.\n\nExpected: 200, searchSource WEB. The app started even though the MCP server is unreachable (@Lazy), and the request fell back to web. Docker Desktop > test-mcp-down > Logs shows 'MCP failed (...), falling back to web'.\n\nAfterwards: docker stop test-mcp-down",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"topic\": \"How does streaming work in the OpenAI Responses API?\", \"maxSources\": 3 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "16. Missing Tavily key -> 500 (port 8082)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 500\", () => pm.response.to.have.status(500));",
+                  "pm.test(\"message is correct\", () => pm.expect(pm.response.json().message).to.eql(\"Web search failed: TAVILY_API_KEY is missing or invalid (see .env.example)\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{noTavilyUrl}}/api/research/summarize",
+              "host": [
+                "{{noTavilyUrl}}"
+              ],
+              "path": [
+                "api",
+                "research",
+                "summarize"
+              ]
+            },
+            "description": "SETUP FIRST (Git Bash, project folder):\n\ndocker run --rm -d --name test-no-tavily -p 8082:8080 --env-file .env -e TAVILY_API_KEY= research-summarizer-agent-research-summarizer\n\nWait about 15 s for startup, then send.\n\nExpected: 500, message 'Web search failed: TAVILY_API_KEY is missing or invalid (see .env.example)'.\n\nAfterwards: docker stop test-no-tavily",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"topic\": \"Health benefits of intermittent fasting\", \"maxSources\": 3 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "17. Missing OpenRouter key -> app does not start (port 8083)",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{noOpenRouterUrl}}/api/research/summarize",
+              "host": [
+                "{{noOpenRouterUrl}}"
+              ],
+              "path": [
+                "api",
+                "research",
+                "summarize"
+              ]
+            },
+            "description": "SETUP FIRST (Git Bash, project folder):\n\ndocker run --rm --name test-no-openrouter -p 8083:8080 --env-file .env -e OPENROUTER_API_KEY= research-summarizer-agent-research-summarizer\n\nThe terminal shows 'OPENROUTER_API_KEY is not set (see .env.example)' and the container stops (fail fast).\n\nThen send this request: Postman shows 'Could not get response ... ECONNREFUSED', because no app is running on port 8083.\n\nScreenshot: the terminal message, plus this Postman error.",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"topic\": \"How does fine-tuning work?\", \"maxSources\": 3 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "mcpDownUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "noTavilyUrl",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "noOpenRouterUrl",
+      "value": "http://localhost:8083"
+    }
+  ]
+}

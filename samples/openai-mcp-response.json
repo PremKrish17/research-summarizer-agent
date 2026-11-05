@@ -1,0 +1,19 @@
+{
+    "topic": "How does streaming work in the OpenAI Responses API?",
+    "searchSource": "MCP",
+    "executiveSummary": "Streaming in the OpenAI Responses API allows clients to process the beginning of a model's output while generation continues, rather than waiting for the full response [S1]. It is enabled by setting stream=True in the API request and uses HTTP streaming over server-sent events (SSE) [S1]. The API delivers semantic events, each typed with a predefined schema, some emitted once and others repeating during generation [S1].",
+    "keyFindings": [
+        "By default, the API generates the entire model output before sending it in a single HTTP response [S1].",
+        "Streaming lets you process the beginning of the model's output while generation continues [S1].",
+        "Responses API streaming uses HTTP streaming over server-sent events (SSE) [S1].",
+        "Enable streaming by setting stream=True in the Responses API request [S1].",
+        "The Responses API uses semantic events for streaming, and each event is typed with a predefined schema [S1].",
+        "Some streaming events are emitted only once while others repeat during generation [S1].",
+        "SDK streaming events are typed instances [S1]."
+    ],
+    "details": "By default, the OpenAI API generates the entire model output before sending it in a single HTTP response [S1]. Streaming changes this by letting you process the beginning of the model's output while generation continues [S1]. To enable it, set stream=True in the Responses API request; the API then uses HTTP streaming over server-sent events (SSE) [S1].\n\nThe Responses API uses semantic events for streaming, and each streaming event is typed with a predefined schema [S1]. Some events are emitted only once, while others repeat during generation [S1]. For example, response.created is emitted when a response is created [S2], and response.output_item.done carries the final encrypted content of an output item [S2]. The response.compaction.compacting event reports summary output at most once every 30 seconds, though a short compaction may finish without emitting a progress event [S2].\n\nStreaming can also involve WebSocket transport: persistent WebSocket transport with previous_response_id uses WebSocket mode [S1], and a response is described as steered when it stops at a safe output boundary after a WebSocket steer event [S2]. In SDKs, streaming events are typed instances [S1].",
+    "sources": [
+        "[S1] Streaming API responses | OpenAI API - https://developers.openai.com/api/docs/guides/streaming-responses",
+        "[S2] Responses streaming events | OpenAI API Reference - https://developers.openai.com/api/reference/resources/responses/streaming-events"
+    ]
+}

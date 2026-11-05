@@ -1,0 +1,8 @@
+services:
+  research-summarizer:
+    build: .
+    ports:
+      - "8080:8080"
+    # OPENROUTER_API_KEY and TAVILY_API_KEY come from your local, gitignored .env file
+    env_file:
+      - .env
